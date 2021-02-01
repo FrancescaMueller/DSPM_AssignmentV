@@ -1,7 +1,7 @@
 # DSPM_AssignmentV
 Assignment V for the course Data Science Project Management, winter semester 2020/21
 
-Exercises
+## Exercises
 1. Setting up a new GitHub repository
 2. Getting to know the API 
 3. Interacting with the API (basics)
