@@ -1,5 +1,6 @@
-# DSPM_AssignmentV
-Assignment V for the course Data Science Project Management, winter semester 2020/21
+# DSPM Assignment V
+Assignment V for the course Data Science Project Management, 
+winter semester 2020/21
 
 ## Exercises
 1. Setting up a new GitHub repository
