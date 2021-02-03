@@ -24,7 +24,8 @@ rm(list = ls())
 
 # Maybe note regarding individual working directory 
 
-# Source private key
+# Source private key - insert yout indicidual path to the key
+source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
 ```
 
 ## Exercise 2: Getting to know the API
@@ -49,4 +50,14 @@ library(httr)
 library(rlist)
 library(tidyverse)
 # library(naniar)
+```
+
+*Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract the content from the response object and inspect the resulting list. Describe what you can see.*
+
+```{r first_GET_request}
+
+
+
+
+
 ```
