@@ -1,0 +1,38 @@
+---
+  title: "Assignment V: GitHub and the ticketmaster.com API"
+subtitle: "Data Science Project Management | Winter Term 2020/21"
+author: "Submitted by Franziska Müller (Student ID: 5401673)"
+date: "February, 16, 2021"
+output: 
+  html_document:
+  toc: true
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+I hereby assure that my submission is in line with the *Code of Conduct* outlined on the lecture slides. I worked on my own.
+
+## General setup
+
+Before I start the project, I clear my workspace and install (if necessary) and load the packages that are needed for the exercises (XXX). 
+# Note regarding key and maybe working directory
+
+```{r preparation, message = FALSE, warning = FALSE}
+# Clear workspace
+rm(list = ls())
+
+# Check if packages have been installed before; if not, install them
+if (!require("knitr")) install.packages("knitr")
+
+# Load packages
+library(knitr)
+
+# Maybe note regarding individual working directory 
+
+# Source private key
+```
+
+## Exercise 2: Getting to know the API
+
+Rate limit is given by 5 requests per second and max. 5,000 requests per day. 
