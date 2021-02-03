@@ -1,5 +1,5 @@
 ---
-  title: "Assignment V: GitHub and the ticketmaster.com API"
+title: "Assignment V: GitHub and the ticketmaster.com API"
 subtitle: "Data Science Project Management | Winter Term 2020/21"
 author: "Submitted by Franziska Müller (Student ID: 5401673)"
 date: "February, 16, 2021"
@@ -62,4 +62,7 @@ Ex3_resp_obj <- GET(url = Ex2_url,
                     countryCode = "DE")
 Ex3_cont_obj <- Ex3_resp_obj %>% content()
 ```
-The reuslting content object is a list with nested structure. It contains the lists named ``r names(Ex3_cont_obj)[1]``, ``r names(Ex3_cont_obj)[2]`` and `` names(Ex3_cont_obj)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
+The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_cont_obj)[1]``, ``r names(Ex3_cont_obj)[2]`` and `` names(Ex3_cont_obj)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
+
+*Extract 'name', 'city', 'postalCode', 'adress', 'url', longitude', 'latitude'.*
+
