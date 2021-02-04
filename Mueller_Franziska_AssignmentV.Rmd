@@ -55,12 +55,20 @@ library(tidyverse)
 *Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract the content from the response object and inspect the resulting list. Describe what you can see.*
 
 ```{r first_GET_request}
-# Event venues in Germany
-country <- "DE"
-Ex2_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues.json?apikey=", key)
-Ex3_resp_obj <- GET(url = Ex2_url, 
-                    query = list(countryCode = country))
-Ex3_cont_obj <- Ex3_resp_obj %>% content()
+
+my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues.json?apikey=", key)
+
+# Create a function for better reusability
+get_content <- function(country) {
+  resp_obj <- GET(url = my_url, 
+                     query = list(countryCode = country))
+  cont_obj <- resp_obj %>% content()
+  return(cont_obj)
+}
+
+Ex3_cont_obj <- get_content('DE')
+
+# Note, maybe better: cont_obj_test <- content(resp_obj, as = "text")
 ```
 The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_cont_obj)[1]``, ``r names(Ex3_cont_obj)[2]`` and `` names(Ex3_cont_obj)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. Interesting here, the lists have different lenghts. Therefore, not every information is given for every venue.
 The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
@@ -79,38 +87,48 @@ df_Ex3 <- tibble(name = character(n),
                  longitude = character(n),  # is.double anpassen 
                  latitude = character(n))
 
-for (i in 1:n) {
-  # Name variable
-  df_Ex3[i, 1] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["name"]])  # ith row, first col 
-  # City variable
-  df_Ex3[i, 2] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
-  # postalCode variable
-  df_Ex3[i, 3] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
-  # adress variable
-  df_Ex3[i, 4] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["address"]][["line1"]])
-  # url variable 
-  df_Ex3[i, 5] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
+fill_dataframe <- function(cont_obj, df) {
+  for (i in 1:n) {
+  df[i, 1] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])  # ith row, first col
+  df[i, 2] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
+  df[i, 3] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
+  df[i, 4] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][["line1"]])
+  df[i, 5] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
   
   # Location variable (long/lat)
-  # Longitude
-  if (is.character(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
-    df_Ex3[i, 6] <- NA
-  }
-  else {
-    df_Ex3[i, 6] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
-  }
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
+    df[i, 6] <- NA
+    } else {
+      df[i, 6] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
+    }
   # Latitude
-  if (is.character(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
-    df_Ex3[i, 7] <- NA
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
+    df[i, 7] <- NA
+    } else {
+      df[i, 7] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+    }
   }
-  else {
-    df_Ex3[i, 7] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
-  }
-  }
+  return(df)
+}
 
-# Converting the type to double
-df_Ex3[ , 6] <- as.double(unlist(df_Ex3[ , 6]))
-df_Ex3[ , 7] <- as.double(unlist(df_Ex3[ , 7]))
+df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)
+
+# Adapt to numerical type
+# Note: double and numeric are "identical"
+# Double describes the type, numeric the mode (implicit the class)
+df_Ex3$longitude <- parse_number(df_Ex3$longitude)
+df_Ex3$latitude <- parse_number(df_Ex3$latitude)
+
 ```
+*blklanf*
 
-
+```{r Notes_num}
+# Converting the type to double
+# Note: as.double is a generic function, it`s identical to as.numeric
+#test <- df_Ex3[, 6:7]
+#test$longitude <- parse_number(test$longitude)
+#options(digits = 10)  # these options just refer to printing - not to the object itself in the environment
+#test$longitude <- as.numeric(test$longitude)
+# test[ , 1] <- as.numeric(unlist(test[ , 1]))  # Problem: "Rounding"
+#df_Ex3 <- df_Ex3 %>% mutate(longitude = as.numeric(longitude), latitude = as.numeric(latitude))
+```
