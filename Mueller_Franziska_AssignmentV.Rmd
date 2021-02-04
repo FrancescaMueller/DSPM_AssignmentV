@@ -119,15 +119,9 @@ for (i in 1:n) {
   }
 }
 
-
-# maybe somtehing class(xyz) != character
-# ifelse(x <= 0.001 | x > 0.1, NA, x)
-
-# Longitude variable
-  df_Ex3[i, 6] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
-  
-  # Latitude variable
-  df_Ex3[i, 7] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+# Converting the type to double
+df_Ex3[ , 6] <- as.double(unlist(df_Ex3[ , 6]))
+df_Ex3[ , 7] <- as.double(unlist(df_Ex3[ , 7]))
 ```
 
 
