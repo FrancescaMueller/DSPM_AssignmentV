@@ -66,15 +66,7 @@ The resulting content object is a list with nested structure. It contains the li
 The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
 
 *Extract 'name', 'city', 'postalCode', 'adress', 'url', longitude', 'latitude'.*
-nam # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["name"]]
-city # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["city"]][["name"]]
-postal code # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["postalCode"]]
-adress # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["address"]][["line1"]]
-url # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["url"]]
-longitude # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["location"]][["longitude"]]
-latitude # Ex3_cont_obj[["_embedded"]][["venues"]][[1]][["location"]][["latitude"]]
-
-# Will get 20 different venues (size = 20, but note the high amount of pages)
+Will get 20 different venues (size = 20, but note the high amount of pages).
 
 ```{r Extracting_specific_elements}
 # Create an empty data frame with number of rows = 20
@@ -98,26 +90,23 @@ for (i in 1:n) {
   df_Ex3[i, 4] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["address"]][["line1"]])
   # url variable 
   df_Ex3[i, 5] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
-  }
-
-# Now considering longitude variable 
-for (i in 1:n) {
+  
+  # Location variable (long/lat)
+  # Longitude
   if (is.character(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
     df_Ex3[i, 6] <- NA
   }
   else {
     df_Ex3[i, 6] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
   }
-}
-# Considering latitude variable
-for (i in 1:n) {
+  # Latitude
   if (is.character(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
     df_Ex3[i, 7] <- NA
   }
   else {
     df_Ex3[i, 7] <- as.tibble(Ex3_cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
   }
-}
+  }
 
 # Converting the type to double
 df_Ex3[ , 6] <- as.double(unlist(df_Ex3[ , 6]))
