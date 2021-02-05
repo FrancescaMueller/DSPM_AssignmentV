@@ -151,6 +151,14 @@ df_Ex4 <- tibble(name = character(m),
                  longitude = character(m),
                  latitude = character(m))
 
+dummy_df <- tibble(name = character(n),
+                 city = character(n),
+                 postalCode = character(n),
+                 adress = character(n),
+                 url = character(n),
+                 longitude = character(n),
+                 latitude = character(n))
+
 # Loop 
 pages <- 2  # dummy variable for faster testing
 # pages <- floor(m/n)  237
@@ -158,20 +166,18 @@ pages <- 2  # dummy variable for faster testing
 # pages <- as.numeric(Ex3_cont_obj[["page"]][["totalPages"]])
 
 all_info_one_conutry <- function(df, country, pages) {
+  # Note: erste Seite nicht vergesssen (page = 0)
   for (i in 1:pages) {
-  # Problem: erste Seite nicht vergesssen (page = 0)
   cont_obj <- get_content(country, i)
-  df[(20*i - 19):(20*i), ] <- fill_dataframe(cont_obj = cont_obj, df = df)  # Hier liegt ein Fehler
-  return(df)
+  df[(20*i - 19):(20*i), ] <- fill_dataframe(cont_obj = cont_obj, df = dummy_df)  # Hier liegt ein Fehler
   }
+  return(df)
   }
 
 df_Ex4 <- all_info_one_conutry(df = df_Ex4,
                                country = country,
-                               pages = 2)
+                               pages = 1)
 
-test_cont_1 <- get_content(country, 0)
-test_cont_2 <- get_content(country, 1)
 test_df <- tibble(name = character(m),
                  city = character(m),
                  postalCode = character(m),
@@ -179,6 +185,6 @@ test_df <- tibble(name = character(m),
                  url = character(m),
                  longitude = character(m),
                  latitude = character(m))
-test_df[1:21, ] <- fill_dataframe(test_cont_1, test_df)
+test_df[1:20, ] <- fill_dataframe(test_cont_1, df = dummy_df)
 
 ```
