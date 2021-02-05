@@ -59,16 +59,18 @@ library(tidyverse)
 my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues.json?apikey=", key)
 
 # Create a function for better reusability
-get_content <- function(country) {
+get_content <- function(country, page) {
   resp_obj <- GET(url = my_url, 
-                     query = list(countryCode = country))
+                     query = list(countryCode = country,
+                                  page = page))
   cont_obj <- resp_obj %>% content()
   return(cont_obj)
 }
 
-Ex3_cont_obj <- get_content('DE')
+country <- 'DE'
+Ex3_cont_obj <- get_content(country, 0)
+# Use page = 0 in order to get the first 20 results
 
-# Note, maybe better: cont_obj_test <- content(resp_obj, as = "text")
 ```
 The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_cont_obj)[1]``, ``r names(Ex3_cont_obj)[2]`` and `` names(Ex3_cont_obj)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. Interesting here, the lists have different lenghts. Therefore, not every information is given for every venue.
 The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
@@ -84,28 +86,28 @@ df_Ex3 <- tibble(name = character(n),
                  postalCode = character(n),
                  adress = character(n),
                  url = character(n),
-                 longitude = character(n),  # is.double anpassen 
+                 longitude = character(n),
                  latitude = character(n))
 
 fill_dataframe <- function(cont_obj, df) {
   for (i in 1:n) {
-  df[i, 1] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])  # ith row, first col
-  df[i, 2] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
-  df[i, 3] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
-  df[i, 4] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][["line1"]])
-  df[i, 5] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
+  df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])  # ith row, first col
+  df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
+  df[i, 3] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
+  df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][["line1"]])
+  df[i, 5] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
   
   # Location variable (long/lat)
   if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
     df[i, 6] <- NA
     } else {
-      df[i, 6] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
+      df[i, 6] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
     }
   # Latitude
   if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
     df[i, 7] <- NA
     } else {
-      df[i, 7] <- as.tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+      df[i, 7] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
     }
   }
   return(df)
@@ -114,16 +116,13 @@ fill_dataframe <- function(cont_obj, df) {
 df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)
 
 # Adapt to numerical type
-# Note: double and numeric are "identical"
-# Double describes the type, numeric the mode (implicit the class)
+# Note: double and numeric are "identical": Double describes the type, numeric the mode (implicit the class)
 df_Ex3$longitude <- parse_number(df_Ex3$longitude)
 df_Ex3$latitude <- parse_number(df_Ex3$latitude)
 
-```
-*blklanf*
+glimpse(df_Ex3)
 
-```{r Notes_num}
-# Converting the type to double
+# Converting the type to double  ----
 # Note: as.double is a generic function, it`s identical to as.numeric
 #test <- df_Ex3[, 6:7]
 #test$longitude <- parse_number(test$longitude)
@@ -131,4 +130,55 @@ df_Ex3$latitude <- parse_number(df_Ex3$latitude)
 #test$longitude <- as.numeric(test$longitude)
 # test[ , 1] <- as.numeric(unlist(test[ , 1]))  # Problem: "Rounding"
 #df_Ex3 <- df_Ex3 %>% mutate(longitude = as.numeric(longitude), latitude = as.numeric(latitude))
+
+```
+
+## Exercise 4: Interacting with the API - advanced
+
+*Have a closer look at the element list named ``page``.*
+There are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements in total. 
+Note: The loop must be enriched with further statements to get the elements from the last page
+Use the parameter ``page`` to access the different pages. 
+
+```{r Ex_4}
+# Create empty data frame
+m = as.numeric(Ex3_cont_obj[["page"]][["totalElements"]])
+df_Ex4 <- tibble(name = character(m),
+                 city = character(m),
+                 postalCode = character(m),
+                 adress = character(m),
+                 url = character(m),
+                 longitude = character(m),
+                 latitude = character(m))
+
+# Loop 
+pages <- 2  # dummy variable for faster testing
+# pages <- floor(m/n)  237
+# Controll for remainder: m - pages*n 
+# pages <- as.numeric(Ex3_cont_obj[["page"]][["totalPages"]])
+
+all_info_one_conutry <- function(df, country, pages) {
+  for (i in 1:pages) {
+  # Problem: erste Seite nicht vergesssen (page = 0)
+  cont_obj <- get_content(country, i)
+  df[(20*i - 19):(20*i), ] <- fill_dataframe(cont_obj = cont_obj, df = df)  # Hier liegt ein Fehler
+  return(df)
+  }
+  }
+
+df_Ex4 <- all_info_one_conutry(df = df_Ex4,
+                               country = country,
+                               pages = 2)
+
+test_cont_1 <- get_content(country, 0)
+test_cont_2 <- get_content(country, 1)
+test_df <- tibble(name = character(m),
+                 city = character(m),
+                 postalCode = character(m),
+                 adress = character(m),
+                 url = character(m),
+                 longitude = character(m),
+                 latitude = character(m))
+test_df[1:21, ] <- fill_dataframe(test_cont_1, test_df)
+
 ```
