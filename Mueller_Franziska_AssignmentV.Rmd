@@ -25,7 +25,9 @@ rm(list = ls())
 # Maybe note regarding individual working directory 
 
 # Source private key - insert yout indicidual path to the key
-source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+# source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+
+key <- "7elxdku9GGG5k8j0Xm8KWdANDgecHMV0"
 ```
 
 ## Exercise 2: Getting to know the API
