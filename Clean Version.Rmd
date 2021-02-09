@@ -1,0 +1,134 @@
+---
+title: "Assignment V: GitHub and the ticketmaster.com API"
+subtitle: "Data Science Project Management | Winter Term 2020/21"
+author: "Submitted by Franziska Müller (Student ID: 5401673)"
+date: "February, 16, 2021"
+output: 
+  html_document:
+  toc: true
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r preparation, message = FALSE, warning = FALSE}
+# Clear workspace
+rm(list = ls())
+
+# Source private key - insert yout indicidual path to the key
+source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+```
+
+```{r packages, message = FALSE, warning = FALSE}
+# Load packages
+library(jsonlite)  
+library(httr)
+library(rlist)
+library(tidyverse)
+```
+
+```{r Functions}
+my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
+
+# Function GET CONTENT
+get_content <- function(country, page) {
+  resp_obj <- GET(url = paste0(my_url, "&locale=*&page=", page, "&countryCode=", country))
+  cont_obj <- resp_obj %>% content()
+  return(cont_obj)
+}
+
+# Function FILLING DATAFRAME
+fill_dataframe <- function(cont_obj, df) {
+  for (i in 1:n) {
+  df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])
+  df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
+  df[i, 3] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
+  # df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])  # adapted
+  
+  # Special case adress: not always mentioned
+  if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["address"]]) == TRUE) {
+    df[i, 4] <- NA
+    } else {
+      df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])
+    }
+  
+  df[i, 5] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
+  
+  # Location variable (long/lat)
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
+    df[i, 6] <- NA
+    } else {
+      df[i, 6] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
+    }
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
+    df[i, 7] <- NA
+    } else {
+      df[i, 7] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+    }
+  }
+  return(df)
+}
+
+```
+
+## Exercise 3: Interacting with the API - the basics
+
+```{r Extracting_specific_elements}
+# Exercise 3 
+country <- 'DE'
+Ex3_cont_obj <- get_content(country, 0)
+# Use page = 0 in order to get the first 20 results
+
+n = 20
+df_Ex3 <- tibble(name = character(n),
+                 city = character(n),
+                 postalCode = character(n),
+                 address = character(n),
+                 url = character(n),
+                 longitude = character(n),
+                 latitude = character(n))
+
+df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)
+
+df_Ex3$longitude <- parse_number(df_Ex3$longitude)
+df_Ex3$latitude <- parse_number(df_Ex3$latitude)
+
+# glimpse(df_Ex3)
+```
+
+## Exercise 4: Interacting with the API - advanced
+
+```{r Ex_4}
+
+m = as.numeric(Ex3_cont_obj[["page"]][["totalElements"]])
+df_test <- tibble(name = character(m),
+                 city = character(m),
+                 postalCode = character(m),
+                 address = character(m),
+                 url = character(m),
+                 longitude = character(m),
+                 latitude = character(m))
+
+dummy_df <- tibble(name = character(n),
+                   city = character(n),
+                   postalCode = character(n),
+                   address = character(n),
+                   url = character(n),
+                   longitude = character(n),
+                   latitude = character(n))
+
+all_info_one_country <- function(df, dummy_df, country, pages) {
+  # Note: erste Seite nicht vergesssen (page = 0)
+  for (j in 1:pages) {
+  cont_obj <- get_content(country, j)
+  df[(20*j - 19):(20*j), ] <- fill_dataframe(cont_obj = cont_obj, df = dummy_df)
+  Sys.sleep(time = 60/5)
+  }
+  # Note: Last page
+  return(df)
+  }
+
+
+
+```

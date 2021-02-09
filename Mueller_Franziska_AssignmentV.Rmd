@@ -25,7 +25,9 @@ rm(list = ls())
 # Maybe note regarding individual working directory 
 
 # Source private key - insert yout indicidual path to the key
-source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+# source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+
+key <- "7elxdku9GGG5k8j0Xm8KWdANDgecHMV0"
 ```
 
 ## Exercise 2: Getting to know the API
@@ -113,7 +115,7 @@ fill_dataframe <- function(cont_obj, df) {
   return(df)
 }
 
-df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)
+df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)  # could also write x <- fill_dataframe(..., df)
 
 # Adapt to numerical type
 # Note: double and numeric are "identical": Double describes the type, numeric the mode (implicit the class)
@@ -152,12 +154,19 @@ df_Ex4 <- tibble(name = character(m),
                  latitude = character(m))
 
 dummy_df <- tibble(name = character(n),
-                 city = character(n),
-                 postalCode = character(n),
-                 adress = character(n),
-                 url = character(n),
-                 longitude = character(n),
-                 latitude = character(n))
+                   city = character(n),
+                   postalCode = character(n),
+                   adress = character(n),
+                   url = character(n),
+                   longitude = character(n),
+                   latitude = character(n))
+
+# Creating cont Obj
+cont_obj_0 <- get_content(country, 0)
+cont_obj_1 <- get_content(country, 1)
+# Use fill_dataframe fct
+test <- fill_dataframe(cont_obj_0, dummy_df)
+
 
 # Loop 
 pages <- 2  # dummy variable for faster testing
@@ -165,26 +174,78 @@ pages <- 2  # dummy variable for faster testing
 # Controll for remainder: m - pages*n 
 # pages <- as.numeric(Ex3_cont_obj[["page"]][["totalPages"]])
 
-all_info_one_conutry <- function(df, country, pages) {
+all_info_one_country <- function(df, dummy_df, country, pages) {
   # Note: erste Seite nicht vergesssen (page = 0)
-  for (i in 1:pages) {
-  cont_obj <- get_content(country, i)
-  df[(20*i - 19):(20*i), ] <- fill_dataframe(cont_obj = cont_obj, df = dummy_df)  # Hier liegt ein Fehler
+  for (j in 1:pages) {
+  cont_obj <- get_content(country, j)
+  df[(20*j - 19):(20*j), ] <- fill_dataframe(cont_obj = cont_obj, df = dummy_df)  # Hier liegt ein Fehler
+  # Pause einführen wegen request rate
+  Sys.sleep(time = 60/5)
   }
   return(df)
   }
 
-df_Ex4 <- all_info_one_conutry(df = df_Ex4,
-                               country = country,
-                               pages = 1)
+```
+jhklsgf
+```{r test}
+# i = 1
+test_df <- tibble(name = character(n),
+                 city = character(n),
+                 postalCode = character(n),
+                 adress = character(n),
+                 url = character(n),
+                 longitude = character(n),
+                 latitude = character(n))
+cont_obj_1 <- get_content(country, 1)
+# test_df[1:20, ] 
+test_df <- fill_dataframe(cont_obj_1, test_df)  # Not working with cont_obj other than cont_obj for page 0
 
-test_df <- tibble(name = character(m),
-                 city = character(m),
-                 postalCode = character(m),
-                 adress = character(m),
-                 url = character(m),
-                 longitude = character(m),
-                 latitude = character(m))
-test_df[1:20, ] <- fill_dataframe(test_cont_1, df = dummy_df)
+# Inspect the wirtten function in Detail
+#i = 1
+test_df[1, 1] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["name"]])  # ith row, first col
+  test_df[1, 2] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["city"]][["name"]])
+  test_df[1, 3] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["postalCode"]])
+  test_df[1, 4] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["address"]][["line1"]])
+  test_df[1, 5] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["url"]])
+  
+  # Location variable (long/lat)
+  if (is.character(cont_obj_1[["_embedded"]][["venues"]][[1]][["location"]][["longitude"]]) == FALSE) {
+    test_df[1, 6] <- NA
+    } else {
+      test_df[1, 6] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["location"]][["longitude"]])
+    }
+  # Latitude
+  if (is.character(cont_obj_1[["_embedded"]][["venues"]][[1]][["location"]][["latitude"]]) == FALSE) {
+    test_df[1, 7] <- NA
+    } else {
+      test_df[1, 7] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[1]][["location"]][["latitude"]])
+    }
+
+# i = 2
+#i = 2
+  
+test_df[2, 1] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[2]][["name"]])  # ith row, first col
+  test_df[i, 2] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[i]][["city"]][["name"]])
+  test_df[i, 3] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[i]][["postalCode"]])
+  test_df[2, 4] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[2]][["address"]][["line1"]])
+  test_df[i, 5] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[i]][["url"]])
+  
+  # Location variable (long/lat)
+  if (is.character(cont_obj_1[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
+    test_df[i, 6] <- NA
+    } else {
+      test_df[i, 6] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
+    }
+  # Latitude
+  if (is.character(cont_obj_1[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
+    test_df[i, 7] <- NA
+    } else {
+      test_df[i, 7] <- as_tibble(cont_obj_1[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+}
+  
+# Merge with big df
+df_Ex4[1:20, ] <- test_df
+
+
 
 ```
