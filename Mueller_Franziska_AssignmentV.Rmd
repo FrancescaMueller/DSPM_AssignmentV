@@ -95,6 +95,8 @@ get_content <- function(country, page) {
   
   # Just keep relevant information asked by the assignment
   cont_obj <- cont_obj %>% select(name, city, postalCode, address, url, location)
+  # Alternative (since this throws to many warnings and is such a workaround)
+  
   
   # Nested structure for "location"
   df <- cont_obj
@@ -151,12 +153,18 @@ all_pages <- function(country, number_pages, df_all_pages) {
       # added since very error prone
       cont_obj <- get_content(country, j)
       df_all_pages[(20 + 20 * j - 19):(20 + 20 * j),] <- cont_obj
-      Sys.sleep(time = 0.5)  # 5 requests per second, but adjusted
+      Sys.sleep(time = 0.3)  # 5 requests per second, but adjusted
     },
     error = function(e){})
     }
   return(df_all_pages)
   }
+
+# Get info 200
+system.time(
+  Ex4_200 <- all_pages(country, 200, df_Ex4)
+)  # 118.20 sec
+
 
 # Get information for Ex.4
 Ex4_5 <- all_pages(country, 5, df_Ex4)
@@ -174,8 +182,5 @@ test_page10 <- get_content(country, 10)  # location does not exist -> Error
 # Comparison known NA field (page 84)
 test_page84_glimpse <- first_glimpse(country, 84)  # works
 test_page84 <- get_content(country, 84)  # works although so many NA in "location"
-
-
-Ex4_15 <- all_pages(country, 15, df_Ex4)  # works
 
 ```
