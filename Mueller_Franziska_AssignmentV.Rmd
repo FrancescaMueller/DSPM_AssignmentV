@@ -131,7 +131,7 @@ Use the parameter ``page`` to access the different pages.
 m = as.numeric(Ex3_cont_obj[["page"]][["totalElements"]])  # Number total elements
 n = as.numeric(count(Ex3))  # Number of elements per page
 
-pages <- floor(m/n)  # 237
+pages <- floor(m/n)  # 237 (13/02/2021)
 # Controlling for remainder: 
 remainder <- m - pages*n  # 3 -> eventually need to adjust for last page
 
@@ -147,10 +147,14 @@ df_Ex4 <- tibble(name = character(m),
 # Loop 
 all_pages <- function(country, number_pages, df_all_pages) {
   for (j in 0:number_pages) {
-  cont_obj <- get_content(country, j)
-  df_all_pages[(20 + 20*j - 19):(20 + 20*j), ] <- cont_obj
-  Sys.sleep(time = 5/60)  # 5 requests per second
-  }
+    tryCatch({  
+      # added since very error prone
+      cont_obj <- get_content(country, j)
+      df_all_pages[(20 + 20 * j - 19):(20 + 20 * j),] <- cont_obj
+      Sys.sleep(time = 0.5)  # 5 requests per second, but adjusted
+    },
+    error = function(e){})
+    }
   return(df_all_pages)
   }
 
@@ -158,8 +162,20 @@ all_pages <- function(country, number_pages, df_all_pages) {
 Ex4_5 <- all_pages(country, 5, df_Ex4)
 Ex4_8 <- all_pages(country, 8, df_Ex4)
 
-Ex4_9 <- all_pages(country, 9, df_Ex4)  # FEHLER -> no location, can`t select it
-Ex4_10 <- all_pages(country, 10, df_Ex4)  # location does not exist
-Ex4_15 <- all_pages(country, 15, df_Ex4)  # location does not exist
+Ex4_9 <- all_pages(country, 9, df_Ex4)  # Woeks sometimes
+Ex4_10 <- all_pages(country, 10, df_Ex4)  # Works sometimes
+# location does not exist
+# Error: no applicable method for 'select_' applied to an object of class "NULL"
+
+# Troubleshooting - single page in detail
+test_page10_glimpse <- first_glimpse(country, 10)  # works
+test_page10 <- get_content(country, 10)  # location does not exist -> Error
+
+# Comparison known NA field (page 84)
+test_page84_glimpse <- first_glimpse(country, 84)  # works
+test_page84 <- get_content(country, 84)  # works although so many NA in "location"
+
+
+Ex4_15 <- all_pages(country, 15, df_Ex4)  # works
 
 ```
