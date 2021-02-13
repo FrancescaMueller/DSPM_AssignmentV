@@ -27,6 +27,7 @@ library(dplyr)
 library(httr)
 library(rlist)
 library(tidyverse)
+library(tidyr)
 ```
 
 ```{r Functions}
@@ -47,61 +48,23 @@ get_content <- function(country, page) {
   
   # Just keep relevant information asked by the assignment
   cont_obj <- cont_obj %>% select(name, city, postalCode, address, url, location)
- # cont_obj <- data.frame(cont_obj)
   
-  # Rename columns
+  # Nested structure for "location"
+  df <- cont_obj
+  df[ , 6] <- cont_obj[ , 6]$longitude
+  df <- df %>% rename("longitude" = "location")
+  df <- df %>% cbind(latitude = cont_obj[ , 6]$latitude)
   
-  #names(cont_obj) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
- #  cont_obj <- cont_obj %>% rename("longitude" = "location"[1])
-  #names(mtcars) <- c("miles_gallon", "cylinders", "display", "horsepower")
+  # Regarding nested structure
+  df[2] <- df[2] %>% unnest(city)  # Note: throwing warning, but works - keep it
+  df[4] <- df[4] %>% unnest(address)
   
-  return(cont_obj)
-}
+  # Change longitude and latitude to type double
+  df$longitude <- df$longitude %>% as.double()
+  df$latitude <- df$latitude %>% as.double()
+  
+  df <- as.data.frame(df)  # Workaround getting names
 
-# Function FILLING DATAFRAME
-fill_dataframe <- function(cont_obj, df) {
-  for (i in 1:n) {
-    # Problematic: error prone api -> throwing error regarind size 0 to 1
-    # Try workaround
-     if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["name"]]) == TRUE) {
-    df[i, 1] <- NA
-    } else {
-      df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]][[1]])
-    }
-    # df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])
-  
-    # Workaround
-     if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]]) == TRUE) {
-    df[i, 2] <- NA
-    } else {
-      df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]][[1]])
-    }
-    
-    # df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]]) ## ggf anpassen
-  df[i, 3] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
-  # df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])  # adapted
-  
-  # Special case adress: not always mentioned
-  if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["address"]]) == TRUE) {
-    df[i, 4] <- NA
-    } else {
-      df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])
-    }
-  
-  df[i, 5] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
-  
-  # Location variable (long/lat)
-  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
-    df[i, 6] <- NA
-    } else {
-      df[i, 6] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
-    }
-  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
-    df[i, 7] <- NA
-    } else {
-      df[i, 7] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
-    }
-  }
   return(df)
 }
 
