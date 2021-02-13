@@ -1,0 +1,192 @@
+---
+title: "Assignment V: GitHub and the ticketmaster.com API"
+subtitle: "Data Science Project Management | Winter Term 2020/21"
+author: "Submitted by Franziska Müller (Student ID: 5401673)"
+date: "February, 16, 2021"
+output: 
+  html_document:
+  toc: true
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r preparation, message = FALSE, warning = FALSE}
+# Clear workspace
+rm(list = ls())
+
+# Source private key - insert yout indicidual path to the key
+source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+```
+
+```{r packages, message = FALSE, warning = FALSE}
+# Load packages
+library(jsonlite) 
+library(dplyr)
+library(httr)
+library(rlist)
+library(tidyverse)
+```
+
+```{r Functions}
+my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
+country <- "DE"
+# Function GET CONTENT
+get_content <- function(country, page) {
+  resp_obj <- GET(url = paste0(my_url, 
+                               "&locale=*&page=", 
+                               page, 
+                               "&countryCode=", 
+                               country))
+  cont_obj <- fromJSON(content(x = resp_obj, 
+                               as = 'text'))
+  
+  # Keep just relevant information about venues in general 
+  cont_obj <- cont_obj$`_embedded`$venues
+  
+  # Just keep relevant information asked by the assignment
+  cont_obj <- cont_obj %>% select(name, city, postalCode, address, url, location)
+ # cont_obj <- data.frame(cont_obj)
+  
+  # Rename columns
+  
+  #names(cont_obj) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
+ #  cont_obj <- cont_obj %>% rename("longitude" = "location"[1])
+  #names(mtcars) <- c("miles_gallon", "cylinders", "display", "horsepower")
+  
+  return(cont_obj)
+}
+
+# Function FILLING DATAFRAME
+fill_dataframe <- function(cont_obj, df) {
+  for (i in 1:n) {
+    # Problematic: error prone api -> throwing error regarind size 0 to 1
+    # Try workaround
+     if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["name"]]) == TRUE) {
+    df[i, 1] <- NA
+    } else {
+      df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]][[1]])
+    }
+    # df[i, 1] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["name"]])
+  
+    # Workaround
+     if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]]) == TRUE) {
+    df[i, 2] <- NA
+    } else {
+      df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]][[1]])
+    }
+    
+    # df[i, 2] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["city"]][["name"]]) ## ggf anpassen
+  df[i, 3] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["postalCode"]])
+  # df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])  # adapted
+  
+  # Special case adress: not always mentioned
+  if (is.null(cont_obj[["_embedded"]][["venues"]][[i]][["address"]]) == TRUE) {
+    df[i, 4] <- NA
+    } else {
+      df[i, 4] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["address"]][[1]])
+    }
+  
+  df[i, 5] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["url"]])
+  
+  # Location variable (long/lat)
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]]) == FALSE) {
+    df[i, 6] <- NA
+    } else {
+      df[i, 6] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["longitude"]])
+    }
+  if (is.character(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]]) == FALSE) {
+    df[i, 7] <- NA
+    } else {
+      df[i, 7] <- as_tibble(cont_obj[["_embedded"]][["venues"]][[i]][["location"]][["latitude"]])
+    }
+  }
+  return(df)
+}
+
+```
+
+## Exercise 3: Interacting with the API - the basics
+
+```{r Extracting_specific_elements}
+# Exercise 3 
+country <- 'DE'
+Ex3_cont_obj <- get_content(country, 0)
+# Use page = 0 in order to get the first 20 results
+
+n = 20
+df_Ex3 <- tibble(name = character(n),
+                 city = character(n),
+                 postalCode = character(n),
+                 address = character(n),
+                 url = character(n),
+                 longitude = character(n),
+                 latitude = character(n))
+
+df_Ex3 <- fill_dataframe(Ex3_cont_obj, df_Ex3)
+
+df_Ex3$longitude <- parse_number(df_Ex3$longitude)
+df_Ex3$latitude <- parse_number(df_Ex3$latitude)
+
+# glimpse(df_Ex3)
+```
+
+## Exercise 4: Interacting with the API - advanced
+
+```{r Ex_4}
+
+m = as.numeric(Ex3_cont_obj[["page"]][["totalElements"]])
+df_Ex4 <- tibble(name = character(m),
+                 city = character(m),
+                 postalCode = character(m),
+                 address = character(m),
+                 url = character(m),
+                 longitude = character(m),
+                 latitude = character(m))
+
+dummy_df <- tibble(name = character(n),
+                   city = character(n),
+                   postalCode = character(n),
+                   address = character(n),
+                   url = character(n),
+                   longitude = character(n),
+                   latitude = character(n))
+
+pages <- floor(m/n)  # 611 pages
+# Controlling for possible remainder
+remainder <- m - pages*n  # 18 
+last_page <- ceiling(m/n)  # 612
+
+all_info_one_country <- function(df, dummy_df, country, pages) {
+  # First page different
+  cont_obj_0 <- get_content(country, page = 0)
+  df[1:20, ] <- fill_dataframe(cont_obj_0, df = dummy_df)
+  
+  # Further pages
+  for (j in 1:pages) {
+  cont_obj <- get_content(country, j)
+  df[(20 + 20*j - 19):(20 + 20*j), ] <- fill_dataframe(cont_obj = cont_obj, df = dummy_df)
+  Sys.sleep(time = 2)  # max. 5 per second, angepasst da abbruch
+  }
+  
+  # Note: Last page
+  # cont_obj_last_page <- get_content(country, page = last_page)
+  
+  return(df)
+  }
+
+df_Ex4_small <- all_info_one_country(df_Ex4, dummy_df, country, 3)
+
+df_page30 <- all_info_one_country(df_Ex4, dummy_df, country, 30)
+df_page40 <- all_info_one_country(df_Ex4, dummy_df, country, 40)
+df_page50 <- all_info_one_country(df_Ex4, dummy_df, country, 50)  # funktionierte schonamal nicht, dann aber wieder
+df_page100 <- all_info_one_country(df_Ex4, dummy_df, country, 100)  # funktioniert manchmal 
+system.time(
+  df_page300 <- all_info_one_country(df_Ex4, dummy_df, country, 300)
+)
+system.time(
+  df_page610 <- all_info_one_country(df_Ex4, dummy_df, country, 610)
+)
+
+```
