@@ -73,15 +73,17 @@ Ex3_first_glimpse <- first_glimpse(country, 0)
 
 ```
 The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_cont_obj)[1]``, ``r names(Ex3_cont_obj)[2]`` and `` names(Ex3_cont_obj)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. Interesting here, the lists have different lenghts. Therefore, not every information is given for every venue.
-The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 pages in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
+The second one contains links regarding the first, self (actual scraped page), next and last page. Here, it is shown that there are 3465 elements in total with 20 results each. In the last one also information about pages and results is given but just the raw information without the respective url. Again, there are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_obj[["page"]][["size"]]`` elements each (in total: ``r Ex3_cont_obj[["page"]][["totalElements"]]`` elements).
 
 
 *Extract 'name', 'city', 'postalCode', 'adress', 'url', longitude', 'latitude'.*
 ```{r get_content_function, warning = FALSE}
 my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
 country <- "DE"
+
 # Function GET CONTENT
 get_content <- function(country, page) {
+  # Note_ n encoding supplied: defaulting to UTF8
   resp_obj <- GET(url = paste0(my_url, 
                                "&locale=*&page=", 
                                page, 
@@ -94,29 +96,19 @@ get_content <- function(country, page) {
   cont_obj <- cont_obj$`_embedded`$venues
   
   # Just keep relevant information asked by the assignment
-  cont_obj <- cont_obj %>% select(name, city, postalCode, address, url, location)
-  # Alternative (since this throws to many warnings and is such a workaround)
-  
-  
-  # Nested structure for "location"
-  df <- cont_obj
-  df[ , 6] <- cont_obj[ , 6]$longitude
-  df <- df %>% rename("longitude" = "location")
-  df <- df %>% cbind(latitude = cont_obj[ , 6]$latitude)
-  
-  # Regarding nested structure
-  df[2] <- df[2] %>% unnest(city)  # Note: throwing warning, but works - keep it
-  df[4] <- df[4] %>% unnest(address)
+  df <- data.frame(cont_obj$name, cont_obj$city[1], # or city[1]
+                   cont_obj$postalCode, cont_obj$address, cont_obj$url,
+                   cont_obj$location[1], cont_obj$location[2]
+                   )
+  # Rename columns
+  names(df) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
   
   # Change longitude and latitude to type double
   df$longitude <- df$longitude %>% as.double()
   df$latitude <- df$latitude %>% as.double()
   
-  df <- as.data.frame(df)  # Workaround getting names
-
   return(df)
 }
-
 
 Ex3 <- get_content(country, 0)
 
@@ -130,12 +122,9 @@ Note: The loop must be enriched with further statements to get the elements from
 Use the parameter ``page`` to access the different pages. 
 
 ```{r Ex_4}
-m = as.numeric(Ex3_cont_obj[["page"]][["totalElements"]])  # Number total elements
-n = as.numeric(count(Ex3))  # Number of elements per page
-
-pages <- floor(m/n)  # 237 (13/02/2021)
-# Controlling for remainder: 
-remainder <- m - pages*n  # 3 -> eventually need to adjust for last page
+m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])  # Number of total elements
+pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
+# n <- as.numeric(nrow(Ex3))  # Number of elements per page
 
 # Create empty data frame
 df_Ex4 <- tibble(name = character(m),
@@ -160,24 +149,33 @@ all_pages <- function(country, number_pages, df_all_pages) {
   return(df_all_pages)
   }
 
+# Get info all pages
+system.time(
+  Ex4_all <- all_pages(country, pages, df_Ex4)
+)  # 92.83, leider nur bis entry 200 -> 10*20
+
+
+# Get info 50
+system.time(
+  Ex4_50 <- all_pages(country, 50, df_Ex4)
+)  # 20.26
+
 # Get info 200
 system.time(
   Ex4_200 <- all_pages(country, 200, df_Ex4)
-)  # 118.20 sec
-
+)
 
 # Get information for Ex.4
 Ex4_5 <- all_pages(country, 5, df_Ex4)
 Ex4_8 <- all_pages(country, 8, df_Ex4)
 
-Ex4_9 <- all_pages(country, 9, df_Ex4)  # Woeks sometimes
-Ex4_10 <- all_pages(country, 10, df_Ex4)  # Works sometimes
-# location does not exist
-# Error: no applicable method for 'select_' applied to an object of class "NULL"
+Ex4_10 <- all_pages(country, 10, df_Ex4)  # works perfectly with adapted df filling
+
+Ex4_11 <- all_pages(country, 11, df_Ex4)  # Problematic: Just fills df till 200 Elements
 
 # Troubleshooting - single page in detail
-test_page10_glimpse <- first_glimpse(country, 10)  # works
-test_page10 <- get_content(country, 10)  # location does not exist -> Error
+test_page11_glimpse <- first_glimpse(country, 11)  # works, BUT: Just NAs in location
+test_page11 <- get_content(country, 11)  # arguments imply differing number of rows: 20, 0
 
 # Comparison known NA field (page 84)
 test_page84_glimpse <- first_glimpse(country, 84)  # works
