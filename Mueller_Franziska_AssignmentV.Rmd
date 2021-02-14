@@ -161,33 +161,9 @@ all_pages <- function(country, number_pages, df_all_pages) {
 # Get info all pages
 system.time(
   Ex4_all <- all_pages(country, pages, df_Ex4)
-)  # 92.83, leider nur bis entry 200 -> 10*20
+) # 127.25
 
-
-# Get info 50
-system.time(
-  Ex4_50 <- all_pages(country, 50, df_Ex4)
-)  # 20.26
-
-# Get info 200
-system.time(
-  Ex4_200 <- all_pages(country, 200, df_Ex4)
-)
-
-# Get information for Ex.4
-Ex4_5 <- all_pages(country, 5, df_Ex4)
-Ex4_8 <- all_pages(country, 8, df_Ex4)
-
-Ex4_10 <- all_pages(country, 10, df_Ex4)  # works perfectly with adapted df filling
-
-Ex4_11 <- all_pages(country, 11, df_Ex4)  # Problematic: Just fills df till 200 Elements
-
-# Troubleshooting - single page in detail
-test_page11_glimpse <- first_glimpse(country, 11)  # works, BUT: Just NAs in location
-test_page11 <- get_content(country, 11)  # arguments imply differing number of rows: 20, 0
-
-# Comparison known NA field (page 84)
-test_page84_glimpse <- first_glimpse(country, 84)  # works
-test_page84 <- get_content(country, 84)  # works although so many NA in "location"
+# Save created data frame
+saveRDS(Ex4_all, file = "./data_DE.rds")
 
 ```
