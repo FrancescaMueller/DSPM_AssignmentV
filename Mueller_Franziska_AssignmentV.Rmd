@@ -174,14 +174,58 @@ saveRDS(Ex4_all, file = "./data_DE.rds")
 
 ```{r visualization_DE}
 # Prepare data frame
-# Ex4 <- Ex4 %>% filter(between(longitude, 5.86694, 15.043611)) # No, want to keep as NA
-Ex4 <- Ex4_all
-Ex4[ , 6][Ex4[, 6] != range(5.86694, 15.043611)] <- NA  # longitude
-Ex4[ , 7][Ex4[, 7] != range(47.271679, 55.0846)] <- NA  # latitude
-# test <- Ex4[complete.cases(Ex4[ , 6:7]),]
+# Note: filter() would be more effective but the assigment asks to assign NA to unwanted data - so first, NAs will be introduced, second, df will adapted to purpose (remove rows containing NAs in longitude/latitude column).
+Ex4 <- Ex4_all %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude < 5.86694,
+  values = NA
+))
+Ex4 <- Ex4 %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude > 15.043611,
+  values = NA
+))
 
+Ex4 <- Ex4 %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude < 47.271679,
+  values = NA
+))
+
+Ex4 <- Ex4 %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude > 55.0846,
+  values = NA
+))
+
+# Remove unneded rows for the plot
+Ex4_plot <- Ex4[complete.cases(Ex4[ , 6:7]), ]
+# Control
+max(Ex4_plot$longitude) <= 15.043611
+max(Ex4_plot$latitude) <= 55.0846
+min(Ex4_plot$longitude) >= 5.86694
+min(Ex4_plot$latitude) >= 47.271679
+# Note: Although location data was adjusted to suggested range some vlaues will be outside the borders
+
+# Plot 
+plot_DE <- ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group),
+    data = map_data("world", region = "Germany"),
+    fill = "grey90",
+    color = "black"
+  ) +
+  geom_point(mapping = aes(x = longitude,
+                           y = latitude), 
+             data = Ex4_plot,
+             color = "purple",
+             alpha = 0.3) + 
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
 
 ```
 
-
+** 
 
