@@ -93,10 +93,10 @@ get_content <- function(country, page) {
                                as = 'text'))
   
   # Keep just relevant information about venues in general 
-  cont_obj <- cont_obj$`_embedded`$venues
+  cont_obj <- as.data.frame(cont_obj$`_embedded`$venues)  # HERE -> some observations have no locations - BUT error if a whole page does not have variable location!
   
   # Just keep relevant information asked by the assignment
-  df <- data.frame(cont_obj$name, cont_obj$city[1], # or city[1]
+  df <- data.frame(cont_obj$name, cont_obj$city[1],
                    cont_obj$postalCode, cont_obj$address, cont_obj$url,
                    cont_obj$location[1], cont_obj$location[2]
                    )
