@@ -93,13 +93,22 @@ get_content <- function(country, page) {
                                as = 'text'))
   
   # Keep just relevant information about venues in general 
-  cont_obj <- as.data.frame(cont_obj$`_embedded`$venues)  # HERE -> some observations have no locations - BUT error if a whole page does not have variable location!
+  placeholder <- as.data.frame(cont_obj$`_embedded`$venues)  # HERE -> some observations have no locations - BUT error if a whole page does not have variable location!
   
   # Just keep relevant information asked by the assignment
-  df <- data.frame(cont_obj$name, cont_obj$city[1],
-                   cont_obj$postalCode, cont_obj$address, cont_obj$url,
-                   cont_obj$location[1], cont_obj$location[2]
+  df <- data.frame(placeholder$name, placeholder$city[1],
+                   placeholder$postalCode, placeholder$address, placeholder$url
+                  # placeholder$location[1], placeholder$location[2]
                    )
+  
+  # Adjust for location
+  if (is.null(placeholder$location) == TRUE) {
+    df['longitude'] <- NA
+    df['latitude'] <- NA
+  } else{
+    df <- df %>% cbind(placeholder$location[1], placeholder$location[2])
+  }
+  
   # Rename columns
   names(df) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
   
