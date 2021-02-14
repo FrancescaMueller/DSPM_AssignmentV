@@ -57,12 +57,14 @@ library(tidyr)
 
 ```{r first_GET_request}
 
-my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues.json?apikey=", key)
+my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
 
 first_glimpse <- function(country, page) {
-  resp_obj <- GET(url = my_url,
-                  query = list(countryCode = country,
-                               page = page))
+  resp_obj <- GET(url = paste0(my_url, 
+                               "&locale=*&page=", 
+                               page, 
+                               "&countryCode=", 
+                               country))
   cont_obj <- resp_obj %>% content()
   return(cont_obj)
 }
