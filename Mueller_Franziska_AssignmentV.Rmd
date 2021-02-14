@@ -227,5 +227,77 @@ plot_DE <- ggplot() +
 
 ```
 
-** 
+## Exercise 6: Event locations in other countries
 
+```{r different_country, warning = FALSE}
+# Choosing a small country with fewer observations 
+# Monaco: no, nearly no data regarding long/lat
+# Try Belgium
+Ex5_first_glimpse <- first_glimpse("BE", 0)  # small data set
+pages_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalPages"]])
+elements_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalElements"]])
+
+# Prepare data frame
+df_Ex6 <- tibble(name = character(elements_be),
+                 city = character(elements_be),
+                 postalCode = character(elements_be),
+                 adress = character(elements_be),
+                 url = character(elements_be),
+                 longitude = double(elements_be),
+                 latitude = double(elements_be))
+
+Ex5_all <- all_pages(country = "BE",
+                     number_pages = elements_be,
+                     df_all_pages = df_Ex6)
+
+# # Prepare df for plot
+# Ex5 <- Ex5_all %>% mutate(longitude = replace(
+#   x = longitude,
+#   list = longitude < 5.86694,
+#   values = NA
+# ))
+# Ex5 <- Ex5_all %>% mutate(longitude = replace(
+#   x = longitude,
+#   list = longitude > 15.043611,
+#   values = NA
+# ))
+# 
+# Ex5 <- Ex5_all %>% mutate(latitude = replace(
+#   x = latitude,
+#   list = latitude < 47.271679,
+#   values = NA
+# ))
+# 
+# Ex5 <- Ex5_all %>% mutate(latitude = replace(
+#   x = latitude,
+#   list = latitude > 55.0846,
+#   values = NA
+# ))
+
+# Remove unneded rows for the plot
+Ex5_plot <- Ex5_all[complete.cases(Ex5_all[ , 6:7]), ]
+
+# Plot 
+plot_BE <- ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group),
+    data = map_data("world", region = "Belgium"),
+    fill = "grey90",
+    color = "black"
+  ) +
+  geom_point(mapping = aes(x = longitude,
+                           y = latitude), 
+             data = Ex5_plot,
+             color = "purple",
+             alpha = 0.3) + 
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Belgium", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
+
+
+
+
+
+# map_data("world", region = "Belgium")
+```
