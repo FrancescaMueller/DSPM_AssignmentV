@@ -133,9 +133,11 @@ Note: The loop must be enriched with further statements to get the elements from
 Use the parameter ``page`` to access the different pages. 
 
 ```{r Ex_4}
-m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])  # Number of total elements
 pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
-# n <- as.numeric(nrow(Ex3))  # Number of elements per page
+# Note looping pages: counting from 0 to 611, in total 612 pages
+# Idea: keep 612 pages and just cut it in the end
+n <- as.numeric(nrow(Ex3))  # Number of elements per page
+m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])
 
 # Create empty data frame
 df_Ex4 <- tibble(name = character(m),
@@ -153,7 +155,7 @@ all_pages <- function(country, number_pages, df_all_pages) {
       # added since very error prone
       cont_obj <- get_content(country, j)
       df_all_pages[(20 + 20 * j - 19):(20 + 20 * j),] <- cont_obj
-      Sys.sleep(time = 0.3)  # 5 requests per second, but adjusted
+      Sys.sleep(time = 0.3)  # 5 requests per second allowed, but adjusted since error prone
     },
     error = function(e){})
     }
@@ -163,7 +165,7 @@ all_pages <- function(country, number_pages, df_all_pages) {
 # Get info all pages
 system.time(
   Ex4_all <- all_pages(country, pages, df_Ex4)
-) #
+) # 251.04 sec
 
 # Save created data frame
 saveRDS(Ex4_all, file = "./data_DE.rds")
@@ -175,36 +177,36 @@ saveRDS(Ex4_all, file = "./data_DE.rds")
 ```{r visualization_DE}
 # Prepare data frame
 # Note: filter() would be more effective but the assigment asks to assign NA to unwanted data - so first, NAs will be introduced, second, df will adapted to purpose (remove rows containing NAs in longitude/latitude column).
-Ex4 <- Ex4_all %>% mutate(longitude = replace(
+Ex5 <- Ex4_all %>% mutate(longitude = replace(
   x = longitude,
   list = longitude < 5.86694,
   values = NA
 ))
-Ex4 <- Ex4 %>% mutate(longitude = replace(
+Ex5 <- Ex5 %>% mutate(longitude = replace(
   x = longitude,
   list = longitude > 15.043611,
   values = NA
 ))
 
-Ex4 <- Ex4 %>% mutate(latitude = replace(
+Ex5 <- Ex5 %>% mutate(latitude = replace(
   x = latitude,
   list = latitude < 47.271679,
   values = NA
 ))
 
-Ex4 <- Ex4 %>% mutate(latitude = replace(
+Ex5 <- Ex5 %>% mutate(latitude = replace(
   x = latitude,
   list = latitude > 55.0846,
   values = NA
 ))
 
 # Remove unneded rows for the plot
-Ex4_plot <- Ex4[complete.cases(Ex4[ , 6:7]), ]
+Ex5_plot <- Ex5[complete.cases(Ex5[ , 6:7]), ]
 # Control
-max(Ex4_plot$longitude) <= 15.043611
-max(Ex4_plot$latitude) <= 55.0846
-min(Ex4_plot$longitude) >= 5.86694
-min(Ex4_plot$latitude) >= 47.271679
+max(Ex5_plot$longitude) <= 15.043611
+max(Ex5_plot$latitude) <= 55.0846
+min(Ex5_plot$longitude) >= 5.86694
+min(Ex5_plot$latitude) >= 47.271679
 # Note: Although location data was adjusted to suggested range some vlaues will be outside the borders
 
 # Plot 
@@ -217,7 +219,7 @@ plot_DE <- ggplot() +
   ) +
   geom_point(mapping = aes(x = longitude,
                            y = latitude), 
-             data = Ex4_plot,
+             data = Ex5_plot,
              color = "purple",
              alpha = 0.3) + 
   theme_void() + coord_quickmap() +
@@ -233,49 +235,68 @@ plot_DE <- ggplot() +
 # Choosing a small country with fewer observations 
 # Monaco: no, nearly no data regarding long/lat
 # Try Belgium
-Ex5_first_glimpse <- first_glimpse("BE", 0)  # small data set
-pages_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalPages"]])
-elements_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalElements"]])
+
+# Repeat Ex.2
+# Same as above.
+
+# Repeat Ex.3
+Ex3_first_glimpse_BE <- first_glimpse("BE", 0)  # small data set
+```
+Describtion: Again, the objected is nested and covers three different aspects(_embedded, _links, page) which are nested, too. The structure is same as before in Ex.2. Relevant information for the Exercise can be accessed via ``Ex3_first_glimpse_BE[["_embedded"]][["venues"]]``. Here, there are ``r Ex3_first_glimpse_BE[["page"]][["totalPages"]]`` pages with mostly ``r Ex3_first_glimpse_BE[["page"]][["size"]]`` elements each, in total ``r Ex3_first_glimpse_BE[["page"]][["totalElements"]]``. 
+
+```{r Ex6}
+# Repaet Ex.3
+Ex3_BE <- get_content('BE', 0)
+
+# Repeat Ex.4
+pages_BE <- as.numeric(Ex5_first_glimpse[["page"]][["totalPages"]])
+m_BE <- as.numeric(Ex5_first_glimpse[["page"]][["totalElements"]])
 
 # Prepare data frame
-df_Ex6 <- tibble(name = character(elements_be),
-                 city = character(elements_be),
-                 postalCode = character(elements_be),
-                 adress = character(elements_be),
-                 url = character(elements_be),
-                 longitude = double(elements_be),
-                 latitude = double(elements_be))
+df_Ex4_BE <- tibble(name = character(m_BE),
+                 city = character(m_BE),
+                 postalCode = character(m_BE),
+                 adress = character(m_BE),
+                 url = character(m_BE),
+                 longitude = double(m_BE),
+                 latitude = double(m_BE))
 
-Ex5_all <- all_pages(country = "BE",
-                     number_pages = elements_be,
-                     df_all_pages = df_Ex6)
+Ex4_all_BE <- all_pages(country = "BE",
+                     number_pages = pages_BE,
+                     df_all_pages = df_Ex4_BE)
 
-# # Prepare df for plot
-# Ex5 <- Ex5_all %>% mutate(longitude = replace(
-#   x = longitude,
-#   list = longitude < 5.86694,
-#   values = NA
-# ))
-# Ex5 <- Ex5_all %>% mutate(longitude = replace(
-#   x = longitude,
-#   list = longitude > 15.043611,
-#   values = NA
-# ))
-# 
-# Ex5 <- Ex5_all %>% mutate(latitude = replace(
-#   x = latitude,
-#   list = latitude < 47.271679,
-#   values = NA
-# ))
-# 
-# Ex5 <- Ex5_all %>% mutate(latitude = replace(
-#   x = latitude,
-#   list = latitude > 55.0846,
-#   values = NA
-# ))
+# Looking up the ranges
+# long = 51.496877 (lat 4.775462)
+# long = 49.508076 (5.474041)  #Torgny
+# 51.096279, 2.590563  # De Panne
+# 50.331120, 6.382170 # Krewinkel
+
+# Prepare df for plot
+Ex5_BE <- Ex4_all_BE %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude < 2.590563,  # BE
+  values = NA
+))
+Ex5_BE <- Ex4_all_BE %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude > 6.382170,  # BE
+  values = NA
+))
+
+Ex5_BE <- Ex4_all_BE %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude < 49.508076,  # BE
+  values = NA
+))
+
+Ex5_BE <- Ex4_all_BE %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude > 51.496877,  # BE
+  values = NA
+))
 
 # Remove unneded rows for the plot
-Ex5_plot <- Ex5_all[complete.cases(Ex5_all[ , 6:7]), ]
+Ex5_plot_BE <- Ex5_BE[complete.cases(Ex5_BE[ , 6:7]), ]
 
 # Plot 
 plot_BE <- ggplot() +
@@ -287,17 +308,13 @@ plot_BE <- ggplot() +
   ) +
   geom_point(mapping = aes(x = longitude,
                            y = latitude), 
-             data = Ex5_plot,
+             data = Ex5_plot_BE,
              color = "purple",
              alpha = 0.3) + 
   theme_void() + coord_quickmap() +
   labs(title = "Event locations across Belgium", caption = "Source: ticketmaster.com") +
   theme(title = element_text(size = 8, face = 'bold'),
         plot.caption = element_text(face = "italic"))
-
-
-
-
 
 # map_data("world", region = "Belgium")
 ```
