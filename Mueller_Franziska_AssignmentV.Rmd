@@ -163,9 +163,25 @@ all_pages <- function(country, number_pages, df_all_pages) {
 # Get info all pages
 system.time(
   Ex4_all <- all_pages(country, pages, df_Ex4)
-) # 127.25
+) #
 
 # Save created data frame
 saveRDS(Ex4_all, file = "./data_DE.rds")
 
 ```
+
+## Exercise 5: Visualizing the extended data
+
+```{r visualization_DE}
+# Prepare data frame
+# Ex4 <- Ex4 %>% filter(between(longitude, 5.86694, 15.043611)) # No, want to keep as NA
+Ex4 <- Ex4_all
+Ex4[ , 6][Ex4[, 6] != range(5.86694, 15.043611)] <- NA  # longitude
+Ex4[ , 7][Ex4[, 7] != range(47.271679, 55.0846)] <- NA  # latitude
+# test <- Ex4[complete.cases(Ex4[ , 6:7]),]
+
+
+```
+
+
+
