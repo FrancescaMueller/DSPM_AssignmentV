@@ -165,7 +165,7 @@ all_pages <- function(country, number_pages, df_all_pages) {
 # Get info all pages
 system.time(
   Ex4_all <- all_pages(country, pages, df_Ex4)
-) # 256.16 sec
+) # 251.04 sec
 
 # Save created data frame
 saveRDS(Ex4_all, file = "./data_DE.rds")
