@@ -57,12 +57,14 @@ library(tidyr)
 
 ```{r first_GET_request}
 
-my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues.json?apikey=", key)
+my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
 
 first_glimpse <- function(country, page) {
-  resp_obj <- GET(url = my_url,
-                  query = list(countryCode = country,
-                               page = page))
+  resp_obj <- GET(url = paste0(my_url, 
+                               "&locale=*&page=", 
+                               page, 
+                               "&countryCode=", 
+                               country))
   cont_obj <- resp_obj %>% content()
   return(cont_obj)
 }
@@ -93,13 +95,22 @@ get_content <- function(country, page) {
                                as = 'text'))
   
   # Keep just relevant information about venues in general 
-  cont_obj <- cont_obj$`_embedded`$venues
+  placeholder <- as.data.frame(cont_obj$`_embedded`$venues)  # HERE -> some observations have no locations - BUT error if a whole page does not have variable location!
   
   # Just keep relevant information asked by the assignment
-  df <- data.frame(cont_obj$name, cont_obj$city[1], # or city[1]
-                   cont_obj$postalCode, cont_obj$address, cont_obj$url,
-                   cont_obj$location[1], cont_obj$location[2]
+  df <- data.frame(placeholder$name, placeholder$city[1],
+                   placeholder$postalCode, placeholder$address, placeholder$url
+                  # placeholder$location[1], placeholder$location[2]
                    )
+  
+  # Adjust for location
+  if (is.null(placeholder$location) == TRUE) {
+    df['longitude'] <- NA
+    df['latitude'] <- NA
+  } else{
+    df <- df %>% cbind(placeholder$location[1], placeholder$location[2])
+  }
+  
   # Rename columns
   names(df) <- c("name", "city", "postalCode", "address", "url", "longitude", "latitude")
   
@@ -152,33 +163,141 @@ all_pages <- function(country, number_pages, df_all_pages) {
 # Get info all pages
 system.time(
   Ex4_all <- all_pages(country, pages, df_Ex4)
-)  # 92.83, leider nur bis entry 200 -> 10*20
+) #
+
+# Save created data frame
+saveRDS(Ex4_all, file = "./data_DE.rds")
+
+```
+
+## Exercise 5: Visualizing the extended data
+
+```{r visualization_DE}
+# Prepare data frame
+# Note: filter() would be more effective but the assigment asks to assign NA to unwanted data - so first, NAs will be introduced, second, df will adapted to purpose (remove rows containing NAs in longitude/latitude column).
+Ex4 <- Ex4_all %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude < 5.86694,
+  values = NA
+))
+Ex4 <- Ex4 %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude > 15.043611,
+  values = NA
+))
+
+Ex4 <- Ex4 %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude < 47.271679,
+  values = NA
+))
+
+Ex4 <- Ex4 %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude > 55.0846,
+  values = NA
+))
+
+# Remove unneded rows for the plot
+Ex4_plot <- Ex4[complete.cases(Ex4[ , 6:7]), ]
+# Control
+max(Ex4_plot$longitude) <= 15.043611
+max(Ex4_plot$latitude) <= 55.0846
+min(Ex4_plot$longitude) >= 5.86694
+min(Ex4_plot$latitude) >= 47.271679
+# Note: Although location data was adjusted to suggested range some vlaues will be outside the borders
+
+# Plot 
+plot_DE <- ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group),
+    data = map_data("world", region = "Germany"),
+    fill = "grey90",
+    color = "black"
+  ) +
+  geom_point(mapping = aes(x = longitude,
+                           y = latitude), 
+             data = Ex4_plot,
+             color = "purple",
+             alpha = 0.3) + 
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
+
+```
+
+## Exercise 6: Event locations in other countries
+
+```{r different_country, warning = FALSE}
+# Choosing a small country with fewer observations 
+# Monaco: no, nearly no data regarding long/lat
+# Try Belgium
+Ex5_first_glimpse <- first_glimpse("BE", 0)  # small data set
+pages_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalPages"]])
+elements_be <- as.numeric(Ex5_first_glimpse[["page"]][["totalElements"]])
+
+# Prepare data frame
+df_Ex6 <- tibble(name = character(elements_be),
+                 city = character(elements_be),
+                 postalCode = character(elements_be),
+                 adress = character(elements_be),
+                 url = character(elements_be),
+                 longitude = double(elements_be),
+                 latitude = double(elements_be))
+
+Ex5_all <- all_pages(country = "BE",
+                     number_pages = elements_be,
+                     df_all_pages = df_Ex6)
+
+# # Prepare df for plot
+# Ex5 <- Ex5_all %>% mutate(longitude = replace(
+#   x = longitude,
+#   list = longitude < 5.86694,
+#   values = NA
+# ))
+# Ex5 <- Ex5_all %>% mutate(longitude = replace(
+#   x = longitude,
+#   list = longitude > 15.043611,
+#   values = NA
+# ))
+# 
+# Ex5 <- Ex5_all %>% mutate(latitude = replace(
+#   x = latitude,
+#   list = latitude < 47.271679,
+#   values = NA
+# ))
+# 
+# Ex5 <- Ex5_all %>% mutate(latitude = replace(
+#   x = latitude,
+#   list = latitude > 55.0846,
+#   values = NA
+# ))
+
+# Remove unneded rows for the plot
+Ex5_plot <- Ex5_all[complete.cases(Ex5_all[ , 6:7]), ]
+
+# Plot 
+plot_BE <- ggplot() +
+  geom_polygon(
+    aes(x = long, y = lat, group = group),
+    data = map_data("world", region = "Belgium"),
+    fill = "grey90",
+    color = "black"
+  ) +
+  geom_point(mapping = aes(x = longitude,
+                           y = latitude), 
+             data = Ex5_plot,
+             color = "purple",
+             alpha = 0.3) + 
+  theme_void() + coord_quickmap() +
+  labs(title = "Event locations across Belgium", caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size = 8, face = 'bold'),
+        plot.caption = element_text(face = "italic"))
 
 
-# Get info 50
-system.time(
-  Ex4_50 <- all_pages(country, 50, df_Ex4)
-)  # 20.26
 
-# Get info 200
-system.time(
-  Ex4_200 <- all_pages(country, 200, df_Ex4)
-)
 
-# Get information for Ex.4
-Ex4_5 <- all_pages(country, 5, df_Ex4)
-Ex4_8 <- all_pages(country, 8, df_Ex4)
 
-Ex4_10 <- all_pages(country, 10, df_Ex4)  # works perfectly with adapted df filling
-
-Ex4_11 <- all_pages(country, 11, df_Ex4)  # Problematic: Just fills df till 200 Elements
-
-# Troubleshooting - single page in detail
-test_page11_glimpse <- first_glimpse(country, 11)  # works, BUT: Just NAs in location
-test_page11 <- get_content(country, 11)  # arguments imply differing number of rows: 20, 0
-
-# Comparison known NA field (page 84)
-test_page84_glimpse <- first_glimpse(country, 84)  # works
-test_page84 <- get_content(country, 84)  # works although so many NA in "location"
-
+# map_data("world", region = "Belgium")
 ```
