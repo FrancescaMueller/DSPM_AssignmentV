@@ -250,32 +250,38 @@ Ex5_all <- all_pages(country = "BE",
                      number_pages = elements_be,
                      df_all_pages = df_Ex6)
 
-# # Prepare df for plot
-# Ex5 <- Ex5_all %>% mutate(longitude = replace(
-#   x = longitude,
-#   list = longitude < 5.86694,
-#   values = NA
-# ))
-# Ex5 <- Ex5_all %>% mutate(longitude = replace(
-#   x = longitude,
-#   list = longitude > 15.043611,
-#   values = NA
-# ))
-# 
-# Ex5 <- Ex5_all %>% mutate(latitude = replace(
-#   x = latitude,
-#   list = latitude < 47.271679,
-#   values = NA
-# ))
-# 
-# Ex5 <- Ex5_all %>% mutate(latitude = replace(
-#   x = latitude,
-#   list = latitude > 55.0846,
-#   values = NA
-# ))
+# Looking up the ranges
+# long = 51.496877 (lat 4.775462)
+# long = 49.508076 (5.474041)  #Torgny
+# 51.096279, 2.590563  # De Panne
+# 50.331120, 6.382170 # Krewinkel
+
+# Prepare df for plot
+Ex5 <- Ex5_all %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude < 2.590563,  # BE
+  values = NA
+))
+Ex5 <- Ex5_all %>% mutate(longitude = replace(
+  x = longitude,
+  list = longitude > 6.382170,  # BE
+  values = NA
+))
+
+Ex5 <- Ex5_all %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude < 49.508076,  # BE
+  values = NA
+))
+
+Ex5 <- Ex5_all %>% mutate(latitude = replace(
+  x = latitude,
+  list = latitude > 51.496877,  # BE
+  values = NA
+))
 
 # Remove unneded rows for the plot
-Ex5_plot <- Ex5_all[complete.cases(Ex5_all[ , 6:7]), ]
+Ex5_plot <- Ex5[complete.cases(Ex5[ , 6:7]), ]
 
 # Plot 
 plot_BE <- ggplot() +
