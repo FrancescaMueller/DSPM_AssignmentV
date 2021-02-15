@@ -77,8 +77,6 @@ first_glimpse <- function(country, page) {
 country <- 'DE'
 Ex3_first_glimpse <- first_glimpse(country, 0)
 # Use page = 0 in order to get the first 20 results
-
-glimpse(Ex3_first_glimpse)
 ```
 The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_first_glimpse)[1]``, ``r names(Ex3_first_glimpse)[2]`` and `` names(Ex3_first_glimpse)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. Interesting here, the lists have different lenghts. Therefore, not every information is given for every venue.
 The second one contains links regarding the first, self (actual scraped page), next and last page. In the last one also information about pages and results is given. There are ``r Ex3_first_glimpse[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse[["page"]][["size"]]`` elements each (in total: ``r Ex3_first_glimpse[["page"]][["totalElements"]]`` elements). The last page differs in the amount of elements.
@@ -133,7 +131,7 @@ glimpse(Ex3)
 There are ``r Ex3_first_glimpse[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse[["page"]][["totalElements"]]`` elements in total. 
 With the parameter ``page`` different pages can be accessed. 
 
-```{r Ex_4, warning = FALSE, error = FALSE}
+```{r Ex_4, warning = FALSE, message = FALSE}
 pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
 pages_loop <- pages - 1 # Counting from 0 to 611, in total 612 pages
 n <- as.numeric(nrow(Ex3))  # Number of elements per page
@@ -243,12 +241,10 @@ Country of choice: ``Belgium``.
 
 # Repeat Ex.3
 Ex3_first_glimpse_BE <- first_glimpse("BE", 0)
-
-glimpse(Ex3_first_glimpse_BE)
 ```
 Describtion: Again, the objected is nested and covers three different aspects(_embedded, _links, page) which are nested, too. The structure is same as before in Ex.2. Relevant information for the Exercise can be accessed via ``Ex3_first_glimpse_BE[["_embedded"]][["venues"]]``. Here, there are ``r Ex3_first_glimpse_BE[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse_BE[["page"]][["size"]]`` elements each, in total ``r Ex3_first_glimpse_BE[["page"]][["totalElements"]]``. Again, the last page differs in the amount of elements. 
 
-```{r Ex6, warning = FALSE}
+```{r Ex6, warning = FALSE, message = FALSE}
 # Repaet Ex.3
 Ex3_BE <- get_content('BE', 0)
 
