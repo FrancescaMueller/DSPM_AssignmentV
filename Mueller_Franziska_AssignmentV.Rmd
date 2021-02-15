@@ -95,12 +95,11 @@ get_content <- function(country, page) {
                                as = 'text'))
   
   # Keep just relevant information about venues in general 
-  placeholder <- as.data.frame(cont_obj$`_embedded`$venues)  # HERE -> some observations have no locations - BUT error if a whole page does not have variable location!
+  placeholder <- as.data.frame(cont_obj$`_embedded`$venues)
   
   # Just keep relevant information asked by the assignment
   df <- data.frame(placeholder$name, placeholder$city[1],
                    placeholder$postalCode, placeholder$address, placeholder$url
-                  # placeholder$location[1], placeholder$location[2]
                    )
   
   # Adjust for location
@@ -132,12 +131,20 @@ There are ``r Ex3_cont_obj[["page"]][["totalPages"]]`` pages with ``r Ex3_cont_o
 Note: The loop must be enriched with further statements to get the elements from the last page
 Use the parameter ``page`` to access the different pages. 
 
-```{r Ex_4}
+```{r Ex_4, warning = FALSE}
 pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
-# Note looping pages: counting from 0 to 611, in total 612 pages
-# Idea: keep 612 pages and just cut it in the end
+# pages_loop <- pages - 1 # Counting from 0 to 611, in total 612 pages
 n <- as.numeric(nrow(Ex3))  # Number of elements per page
-m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])
+
+m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])  # number total elements
+
+# Controlling for remainder
+pages_control <- floor(m/n) # 611 pages
+# Controlling for possible remainder
+remainder <- m - floor(m/n)*n  # 18 
+last_page <- ceiling(m/n)  # 612
+# Note: need to consider last page as special case since the function all_pages cannot handle df with less than n = 20 rows
+
 
 # Create empty data frame
 df_Ex4 <- tibble(name = character(m),
@@ -158,14 +165,18 @@ all_pages <- function(country, number_pages, df_all_pages) {
       Sys.sleep(time = 0.3)  # 5 requests per second allowed, but adjusted since error prone
     },
     error = function(e){})
-    }
+  }
   return(df_all_pages)
   }
 
 # Get info all pages
 system.time(
-  Ex4_all <- all_pages(country, pages, df_Ex4)
-) # 251.04 sec
+  Ex4_all <- all_pages(country, pages_loop, df_Ex4),
+  # Add infor for last page
+  Ex4_all[12221:m,] <- get_content(country, 611)  # Last page is 612 - 611 since counting starts at index 0
+) # 245.65 sec
+
+
 
 # Save created data frame
 saveRDS(Ex4_all, file = "./data_DE.rds")
@@ -226,6 +237,9 @@ plot_DE <- ggplot() +
   labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
   theme(title = element_text(size = 8, face = 'bold'),
         plot.caption = element_text(face = "italic"))
+
+# Save the plot in the end
+# ggsave('plot_DE.jpeg') 
 
 ```
 
