@@ -16,7 +16,7 @@ I hereby assure that my submission is in line with the *Code of Conduct* outline
 ## General setup
 
 Before I start the project, I clear my workspace. 
-Please insert your individual key. 
+Please source your individual key and set your individual working directory.
 
 ```{r preparation, message = FALSE, warning = FALSE}
 # Clear workspace
@@ -24,6 +24,11 @@ rm(list = ls())
 
 # Source private key - insert your indicidual path to the key
 source("C:/Users/Francesca/Desktop/MA_WiSe 202021/Data Science Project Management/Assignments/key_ticketmaster.R")
+
+# Modify individual working directory 
+# Replace working directory by your individual wd here
+BasicFilePath <- file.path("C:/Users/Francesca/Documents/GitHub/DSPM_AssignmentV")
+setwd(BasicFilePath)
 ```
 
 ## Exercise 1: Setting up a GitHub repository
@@ -73,14 +78,13 @@ country <- 'DE'
 Ex3_first_glimpse <- first_glimpse(country, 0)
 # Use page = 0 in order to get the first 20 results
 
+glimpse(Ex3_first_glimpse)
 ```
 The resulting content object is a list with nested structure. It contains the lists named ``r names(Ex3_first_glimpse)[1]``, ``r names(Ex3_first_glimpse)[2]`` and `` names(Ex3_first_glimpse)[3]``. The first one covers different venues and detailed information about a specific venue such as name, type, postal code etc. Interesting here, the lists have different lenghts. Therefore, not every information is given for every venue.
-The second one contains links regarding the first, self (actual scraped page), next and last page. In the last one also information about pages and results is given. There are ``r Ex3_first_glimpse[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse[["page"]][["size"]]`` elements each (in total: ``r Ex3_first_glimpse[["page"]][["totalElements"]]`` elements).
+The second one contains links regarding the first, self (actual scraped page), next and last page. In the last one also information about pages and results is given. There are ``r Ex3_first_glimpse[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse[["page"]][["size"]]`` elements each (in total: ``r Ex3_first_glimpse[["page"]][["totalElements"]]`` elements). The last page differs in the amount of elements.
 
 *Extract 'name', 'city', 'postalCode', 'adress', 'url', longitude', 'latitude'.*
 ```{r get_content_function, warning = FALSE}
-my_url <- paste0("https://app.ticketmaster.com/discovery/v2/venues?apikey=", key)
-country <- "DE"
 
 # Function GET CONTENT
 get_content <- function(country, page) {
@@ -120,22 +124,23 @@ get_content <- function(country, page) {
 
 Ex3 <- get_content(country, 0)
 
+glimpse(Ex3)
 ```
 
 ## Exercise 4: Interacting with the API - advanced
 
 *Have a closer look at the element list named ``page``.*
 There are ``r Ex3_first_glimpse[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse[["page"]][["totalElements"]]`` elements in total. 
-Use the parameter ``page`` to access the different pages. 
+With the parameter ``page`` different pages can be accessed. 
 
-```{r Ex_4, warning = FALSE}
+```{r Ex_4, warning = FALSE, error = FALSE}
 pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
 pages_loop <- pages - 1 # Counting from 0 to 611, in total 612 pages
 n <- as.numeric(nrow(Ex3))  # Number of elements per page
 m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])  # Number total elements
 
 # Controlling for remainder
-pages == floor(m/n)  # False 
+# pages == floor(m/n)  # False 
 # Note: need to consider last page as special case since the function all_pages cannot handle df with less than n = 20 rows
 
 # Create empty data frame
@@ -153,7 +158,8 @@ all_pages <- function(country, number_pages, df_all_pages) {
     tryCatch({
       cont_obj <- get_content(country, j)
       df_all_pages[(20 + 20 * j - 19):(20 + 20 * j),] <- cont_obj
-      Sys.sleep(time = 0.3)  # 5 requests per second allowed, but adjusted since error prone
+      Sys.sleep(time = 0.3)  
+      # 5 requests per second allowed, but adjusted since error prone
     },
     error = function(e){})
   }
@@ -166,7 +172,9 @@ Ex4_all <- all_pages(country, pages_loop, df_Ex4)
 Ex4_all[12221:m,] <- get_content(country, pages_loop)
 
 # Save created data frame
-# saveRDS(Ex4_all, file = "./data/data_DE.rds")
+saveRDS(Ex4_all, file = "./data/data_DE.rds")
+
+glimpse(Ex4_all)
 
 ```
 
@@ -202,12 +210,6 @@ Ex5 <- Ex5 %>% mutate(latitude = replace(
 # Remove unneded rows for the plot
 Ex5_plot <- Ex5[complete.cases(Ex5[ , 6:7]), ]
 
-# Control
-# max(Ex5_plot$longitude) <= 15.043611
-# max(Ex5_plot$latitude) <= 55.0846
-# min(Ex5_plot$longitude) >= 5.86694
-# min(Ex5_plot$latitude) >= 47.271679
-
 # Plot 
 plot_DE <- ggplot() +
   geom_polygon(
@@ -231,16 +233,18 @@ plot_DE <- ggplot() +
 plot_DE
 ```
 
-## Exercise 6: Event locations in other countries
+## Exercise 6: Event locations in other countries 
+
+Country of choice: ``Belgium``.
 
 ```{r different_country, warning = FALSE}
-# Choosing a small country with fewer observations -> Belgium
-
 # Repeat Ex.2
 # Same as above.
 
 # Repeat Ex.3
-Ex3_first_glimpse_BE <- first_glimpse("BE", 0)  # Compared to Germany: small data set
+Ex3_first_glimpse_BE <- first_glimpse("BE", 0)
+
+glimpse(Ex3_first_glimpse_BE)
 ```
 Describtion: Again, the objected is nested and covers three different aspects(_embedded, _links, page) which are nested, too. The structure is same as before in Ex.2. Relevant information for the Exercise can be accessed via ``Ex3_first_glimpse_BE[["_embedded"]][["venues"]]``. Here, there are ``r Ex3_first_glimpse_BE[["page"]][["totalPages"]]`` pages with ``r Ex3_first_glimpse_BE[["page"]][["size"]]`` elements each, in total ``r Ex3_first_glimpse_BE[["page"]][["totalElements"]]``. Again, the last page differs in the amount of elements. 
 
@@ -255,7 +259,7 @@ m_BE <- as.numeric(Ex3_first_glimpse_BE[["page"]][["totalElements"]])
 
 # Control for remainder
 # pages_BE == floor(m_BE/n)  # FALSE
-# Thereofre, need to account for last page
+# Therefore, need to account for last page
 
 # Prepare data frame
 df_Ex4_BE <- tibble(name = character(m_BE),
@@ -273,7 +277,7 @@ Ex4_all_BE <- all_pages(country = "BE",
 Ex4_all_BE[1021:m_BE,] <- get_content('BE', pages_loop_BE)
 
 # Save created data frame
-# saveRDS(Ex4_all_BE, file = "./data/data_BE.rds")
+saveRDS(Ex4_all_BE, file = "./data/data_BE.rds")
 
 # Looking up the extreme points for Belgium
 # https://en.wikipedia.org/wiki/Geography_of_Belgium#Extreme_points
