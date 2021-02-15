@@ -133,9 +133,8 @@ Use the parameter ``page`` to access the different pages.
 
 ```{r Ex_4, warning = FALSE}
 pages <- as.numeric(Ex3_first_glimpse[["page"]][["totalPages"]])  # Number of total pages
-# pages_loop <- pages - 1 # Counting from 0 to 611, in total 612 pages
+pages_loop <- pages - 1 # Counting from 0 to 611, in total 612 pages
 n <- as.numeric(nrow(Ex3))  # Number of elements per page
-
 m <- as.numeric(Ex3_first_glimpse[["page"]][["totalElements"]])  # number total elements
 
 # Controlling for remainder
@@ -173,13 +172,12 @@ all_pages <- function(country, number_pages, df_all_pages) {
 system.time(
   Ex4_all <- all_pages(country, pages_loop, df_Ex4),
   # Add infor for last page
-  Ex4_all[12221:m,] <- get_content(country, 611)  # Last page is 612 - 611 since counting starts at index 0
+  Ex4_all[12221:m,] <- get_content(country, pages_loop)
 ) # 245.65 sec
 
 
-
 # Save created data frame
-saveRDS(Ex4_all, file = "./data_DE.rds")
+# saveRDS(Ex4_all, file = "./data_DE.rds")
 
 ```
 
@@ -187,7 +185,8 @@ saveRDS(Ex4_all, file = "./data_DE.rds")
 
 ```{r visualization_DE}
 # Prepare data frame
-# Note: filter() would be more effective but the assigment asks to assign NA to unwanted data - so first, NAs will be introduced, second, df will adapted to purpose (remove rows containing NAs in longitude/latitude column).
+# Note: filter() would be more effective but the assigment asks to assign NA to unwanted data - so first, NAs will be introduced, second, df will adapted to purpose (remove rows containing NAs in longitude/latitude column etc.).
+
 Ex5 <- Ex4_all %>% mutate(longitude = replace(
   x = longitude,
   list = longitude < 5.86694,
@@ -213,6 +212,7 @@ Ex5 <- Ex5 %>% mutate(latitude = replace(
 
 # Remove unneded rows for the plot
 Ex5_plot <- Ex5[complete.cases(Ex5[ , 6:7]), ]
+
 # Control
 max(Ex5_plot$longitude) <= 15.043611
 max(Ex5_plot$latitude) <= 55.0846
@@ -232,12 +232,13 @@ plot_DE <- ggplot() +
                            y = latitude), 
              data = Ex5_plot,
              color = "purple",
-             alpha = 0.3) + 
+             alpha = 0.1) + 
   theme_void() + coord_quickmap() +
   labs(title = "Event locations across Germany", caption = "Source: ticketmaster.com") +
   theme(title = element_text(size = 8, face = 'bold'),
         plot.caption = element_text(face = "italic"))
 
+plot_DE
 # Save the plot in the end
 # ggsave('plot_DE.jpeg') 
 
@@ -246,15 +247,13 @@ plot_DE <- ggplot() +
 ## Exercise 6: Event locations in other countries
 
 ```{r different_country, warning = FALSE}
-# Choosing a small country with fewer observations 
-# Monaco: no, nearly no data regarding long/lat
-# Try Belgium
+# Choosing a small country with fewer observations -> Belgium
 
 # Repeat Ex.2
 # Same as above.
 
 # Repeat Ex.3
-Ex3_first_glimpse_BE <- first_glimpse("BE", 0)  # small data set
+Ex3_first_glimpse_BE <- first_glimpse("BE", 0)  # Compared to Germany: small data set
 ```
 Describtion: Again, the objected is nested and covers three different aspects(_embedded, _links, page) which are nested, too. The structure is same as before in Ex.2. Relevant information for the Exercise can be accessed via ``Ex3_first_glimpse_BE[["_embedded"]][["venues"]]``. Here, there are ``r Ex3_first_glimpse_BE[["page"]][["totalPages"]]`` pages with mostly ``r Ex3_first_glimpse_BE[["page"]][["size"]]`` elements each, in total ``r Ex3_first_glimpse_BE[["page"]][["totalElements"]]``. 
 
@@ -263,8 +262,13 @@ Describtion: Again, the objected is nested and covers three different aspects(_e
 Ex3_BE <- get_content('BE', 0)
 
 # Repeat Ex.4
-pages_BE <- as.numeric(Ex5_first_glimpse[["page"]][["totalPages"]])
-m_BE <- as.numeric(Ex5_first_glimpse[["page"]][["totalElements"]])
+pages_BE <- as.numeric(Ex3_first_glimpse_BE[["page"]][["totalPages"]])
+pages_loop_BE <- pages_BE - 1
+m_BE <- as.numeric(Ex3_first_glimpse_BE[["page"]][["totalElements"]])
+
+# Control for remainder
+pages_BE == floor(m_BE/n)  # FALSE
+# Thereofre, need to account for last page
 
 # Prepare data frame
 df_Ex4_BE <- tibble(name = character(m_BE),
@@ -274,10 +278,16 @@ df_Ex4_BE <- tibble(name = character(m_BE),
                  url = character(m_BE),
                  longitude = double(m_BE),
                  latitude = double(m_BE))
-
-Ex4_all_BE <- all_pages(country = "BE",
+system.time(
+  Ex4_all_BE <- all_pages(country = "BE",
                      number_pages = pages_BE,
-                     df_all_pages = df_Ex4_BE)
+                     df_all_pages = df_Ex4_BE),
+  # Account for last page
+  Ex4_all_BE[1021:m_BE, ] <- get_content('BE', pages_loop_BE)
+  )  # 26.22  sec
+
+# Save created data frame
+# saveRDS(Ex4_all_BE, file = "./data_BE.rds")
 
 # Looking up the ranges
 # long = 51.496877 (lat 4.775462)
