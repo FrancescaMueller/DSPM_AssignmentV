@@ -289,11 +289,8 @@ system.time(
 # Save created data frame
 # saveRDS(Ex4_all_BE, file = "./data_BE.rds")
 
-# Looking up the ranges
-# long = 51.496877 (lat 4.775462)
-# long = 49.508076 (5.474041)  #Torgny
-# 51.096279, 2.590563  # De Panne
-# 50.331120, 6.382170 # Krewinkel
+# Looking up the extreme points for Belgium
+# https://en.wikipedia.org/wiki/Geography_of_Belgium#Extreme_points
 
 # Prepare df for plot
 Ex5_BE <- Ex4_all_BE %>% mutate(longitude = replace(
@@ -301,19 +298,20 @@ Ex5_BE <- Ex4_all_BE %>% mutate(longitude = replace(
   list = longitude < 2.590563,  # BE
   values = NA
 ))
-Ex5_BE <- Ex4_all_BE %>% mutate(longitude = replace(
+
+Ex5_BE <- Ex5_BE %>% mutate(longitude = replace(
   x = longitude,
   list = longitude > 6.382170,  # BE
   values = NA
 ))
 
-Ex5_BE <- Ex4_all_BE %>% mutate(latitude = replace(
+Ex5_BE <- Ex5_BE %>% mutate(latitude = replace(
   x = latitude,
   list = latitude < 49.508076,  # BE
   values = NA
 ))
 
-Ex5_BE <- Ex4_all_BE %>% mutate(latitude = replace(
+Ex5_BE <- Ex5_BE %>% mutate(latitude = replace(
   x = latitude,
   list = latitude > 51.496877,  # BE
   values = NA
@@ -340,5 +338,5 @@ plot_BE <- ggplot() +
   theme(title = element_text(size = 8, face = 'bold'),
         plot.caption = element_text(face = "italic"))
 
-# map_data("world", region = "Belgium")
+plot_BE
 ```
